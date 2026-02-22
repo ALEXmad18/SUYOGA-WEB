@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUYOGA Group of Institutions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050a15;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-blue: #00d2ff;
+            --accent-purple: #9d50bb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+        
+        body {
+            background: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- FADE IN ANIMATION STYLE --- */
+        .glass-card {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .glass-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- NIGHT OWL STYLE --- */
+        #nightOwl {
+            position: fixed; bottom: 20px; left: 20px; background: rgba(10, 22, 49, 0.9);
+            border: 1px solid var(--accent-blue); padding: 15px 20px; border-radius: 15px;
+            display: none; z-index: 6000; backdrop-filter: blur(10px);
+        }
+
+        /* --- COMPARE TOOL STYLE --- */
+        #compareTray {
+            position: fixed; bottom: -100%; left: 0; width: 100%; background: rgba(5, 10, 21, 0.98);
+            backdrop-filter: blur(20px); border-top: 2px solid var(--accent-blue);
+            z-index: 9500; padding: 25px; transition: 0.5s ease;
+        }
+        #compareTray.active { bottom: 0; }
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .compare-box { background: var(--glass); padding: 15px; border-radius: 15px; border: 1px solid var(--glass-border); }
+        .compare-btn-mini { padding: 5px 15px; border-radius: 20px; border: 1px solid var(--accent-blue); color: var(--accent-blue); background: transparent; cursor: pointer; margin-top: 10px; font-size: 0.8rem; }
+
+        .bg-animate {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(125deg, #050a15, #0a1631, #11081a, #050a15);
+            background-size: 400% 400%;
+            animation: uniqueMesh 15s ease infinite;
+        }
+
+        @keyframes uniqueMesh {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- UPDATED FLOATING STICKY SEARCH UI --- */
+        .search-wrapper {
+            max-width: 550px;
+            margin: 0 auto 40px;
+            position: sticky;
+            top: 10px; /* Distance from top while scrolling */
+            z-index: 1100;
+            padding: 0;
+            background: transparent;
+        }
+        .search-input {
+            width: 100%;
+            padding: 18px 115px 18px 55px;
+            border-radius: 50px;
+            background: rgba(10, 20, 40, 0.9); /* Darker glass for text contrast */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+        .search-input:focus {
+            border-color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.3);
+        }
+        .search-wrapper > i.fa-search {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-blue);
+            z-index: 101;
+        }
+
+        /* Search bar internal actions */
+        .search-actions {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 102;
+        }
+        .lang-btn {
+            font-size: 0.7rem; font-weight: 800; cursor: pointer; border-radius: 4px;
+            border: 1px solid var(--accent-blue); padding: 2px 6px; min-width: 32px;
+            text-align: center; color: var(--accent-blue); transition: 0.3s;
+        }
+        .mic-icon { color: var(--accent-blue); cursor: pointer; transition: 0.3s; }
+        .mic-icon.recording { color: #ff4d4d; animation: micPulse 1.5s infinite; }
+        .clear-btn { color: #475569; cursor: pointer; display: none; }
+        @keyframes micPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        #noResultMsg {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: var(--glass);
+            border: 1px dashed var(--glass-border);
+            border-radius: 24px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        #backToTop {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--accent-blue);
+            color: #050a15;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+        #backToTop:hover { transform: translateY(-5px); background: white; }
+
+        .ask-container {
+            display: flex; gap: 30px; justify-content: center;
+            margin: 30px 0; perspective: 1000px;
+        }
+        .ask-letter { text-align: center; cursor: pointer; transition: 0.3s; }
+        .ask-letter:hover { transform: translateY(-10px); }
+        .ask-box {
+            width: 75px; height: 75px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 18px; display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; font-weight: 900; margin: 0 auto 10px;
+            box-shadow: 0 10px 25px rgba(0, 210, 255, 0.2);
+            transition: 0.4s;
+        }
+        .ask-letter:hover .ask-box { 
+            box-shadow: 0 0 35px var(--accent-blue);
+            transform: scale(1.1);
+        }
+        .ask-label { font-weight: 700; text-transform: uppercase; color: var(--accent-blue); font-size: 0.8rem; letter-spacing: 1px; }
+
+        .floating-stack {
+            position: fixed; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; gap: 15px; z-index: 5000;
+        }
+
+        .action-btn {
+            width: 55px; height: 55px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: white; cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-decoration: none; border: none;
+        }
+        .action-btn:hover { transform: scale(1.15) rotate(5deg); }
+        .btn-whatsapp { background: #25d366; }
+        .btn-pdf { background: #ff4d4d; }
+        .btn-maps { background: #fbbc04; }
+        .btn-enquiry { background: var(--accent-blue); }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 8%; background: rgba(5, 10, 21, 0.8);
+            backdrop-filter: blur(20px); position: fixed;
+            width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo { 
+            font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; 
+            background: linear-gradient(to right, var(--accent-blue), var(--accent-purple)); 
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent; 
+            color: transparent;
+        }
+
+        nav a { color: #fff; text-decoration: none; margin-left: 30px; font-weight: 500; font-size: 0.95rem; transition: 0.3s; }
+        nav a:hover { color: var(--accent-blue); }
+
+        .hero {
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+            padding: 0 10%;
+        }
+        .hero h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800; margin-bottom: 10px; line-height: 1.1; }
+
+        .cta-btn {
+            padding: 18px 45px; font-size: 1.1rem; font-weight: 700; color: white;
+            background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
+            border: none; border-radius: 50px; cursor: pointer; transition: 0.4s;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.3);
+            display: inline-flex; align-items: center; gap: 10px;
+        }
+
+        #academyVault {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050a15; z-index: 9000; overflow-y: auto; padding: 100px 5% 50px;
+        }
+
+        .close-vault { position: fixed; top: 30px; right: 5%; font-size: 2.5rem; cursor: pointer; color: var(--accent-blue); z-index: 9001; }
+
+        .container {
+            max-width: 1200px; margin: auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px; position: relative; overflow: hidden;
+            height: 420px; transition: 0.5s; cursor: pointer;
+        }
+
+        .course-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; background: #1a202c;}
+        
+        .card-static-info {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 25px;
+            background: linear-gradient(to top, rgba(5,10,21,1), transparent);
+            text-align: center; z-index: 2; transition: 0.4s;
+        }
+
+        .card-static-info i { font-size: 2rem; color: var(--accent-blue); margin-bottom: 8px; }
+        .card-static-info h3 { font-size: 1.3rem; font-weight: 700; }
+
+        .card-overlay {
+            position: absolute; top: 100%; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 10, 21, 0.95); backdrop-filter: blur(15px);
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center; padding: 25px;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5;
+        }
+
+        .glass-card:hover .card-overlay { top: 0; }
+        .glass-card:hover .course-img { transform: scale(1.1); filter: blur(4px); }
+        .glass-card:hover .card-static-info { opacity: 0; }
+
+        .overlay-enquiry-btn {
+            margin-top: 15px; padding: 10px 25px; border-radius: 50px;
+            background: var(--accent-blue); color: #050a15; font-weight: 800;
+            text-decoration: none; font-size: 0.85rem; transition: 0.3s; border: none;
+        }
+
+        .contact-box { padding: 120px 8%; background: #070d1a; border-top: 1px solid var(--glass-border); }
+        .contact-grid { 
+            display: grid; grid-template-columns: 1fr 1.2fr; gap: 60px; 
+            max-width: 1250px; margin: auto; align-items: center;
+        }
+
+        .form-container {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            border-radius: 30px; padding: 45px; position: relative; overflow: hidden;
+        }
+
+        .inquiry-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: span 2; }
+
+        .input-group { position: relative; }
+        .input-group i { position: absolute; left: 18px; top: 18px; color: var(--accent-blue); }
+
+        .inquiry-form input, .inquiry-form select {
+            width: 100%; background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--glass-border); padding: 16px 15px 16px 48px;
+            border-radius: 14px; color: white; font-size: 1rem; outline: none; transition: 0.3s;
+        }
+
+        .success-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050a15; display: none; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; z-index: 20;
+        }
+
+        .skills-flex { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 50px; padding-bottom: 50px; }
+        .skill-item { 
+            text-align: center; width: 140px; padding: 20px; 
+            background: var(--glass); border-radius: 20px; border: 1px solid var(--glass-border);
+            transition: 0.3s; cursor: pointer;
+        }
+        .skill-item:hover { transform: translateY(-10px); border-color: var(--accent-blue); }
+        .skill-item i { font-size: 2.2rem; color: var(--accent-blue); margin-bottom: 10px; }
+        .skill-item p { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+
+        @media (max-width: 950px) {
+            .contact-grid { grid-template-columns: 1fr; }
+            .inquiry-form { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="nightOwl">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-moon" style="color: #fbbc04;"></i>
+        <div style="font-size: 0.8rem;"><strong>Late Night Study?</strong> Use code <strong>'NIGHTOWL'</strong>!</div>
+    </div>
+</div>
+
+<div id="compareTray">
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <h3>Course Comparison</h3>
+        <span onclick="closeCompare()" style="cursor:pointer; color:var(--accent-blue);">[Clear All]</span>
+    </div>
+    <div class="compare-grid" id="compareContent">
+        <div class="compare-box">Select first course...</div>
+        <div class="compare-box">Select second course...</div>
+    </div>
+</div>
+
+<div class="bg-animate"></div>
+
+<div id="backToTop" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></div>
+
+<div class="floating-stack">
+    <a href="https://wa.me/919620837458" target="_blank" class="action-btn btn-whatsapp"><i class="fab fa-whatsapp"></i></a>
+    <a href="#" class="action-btn btn-pdf" title="Download Brochure"><i class="fas fa-file-pdf"></i></a>
+    <a href="#" target="_blank" class="action-btn btn-maps"><i class="fas fa-map-marker-alt"></i></a>
+    <a href="#contact" class="action-btn btn-enquiry"><i class="fas fa-paper-plane"></i></a>
+</div>
+
+<header>
+    <div class="logo">SUYOGA</div>
+    <nav>
+        <a href="#home">Home</a>
+        <a onclick="toggleVault()">Courses</a>
+        <a href="#contact">Contact</a>
+    </nav>
+</header>
+
+<section class="hero" id="home">
+    <h1> SUYOGA <br><span style="color: var(--accent-blue);">GROUP OF INSTITUTIONS</span></h1>
+    
+    <div class="ask-container">
+        <div class="ask-letter"><div class="ask-box">A</div><div class="ask-label">Attitude</div></div>
+        <div class="ask-letter"><div class="ask-box">S</div><div class="ask-label">Skill</div></div>
+        <div class="ask-letter"><div class="ask-box">K</div><div class="ask-label">Knowledge</div></div>
+    </div>
+
+    <p style="color: #cbd5e1; max-width: 500px; margin-bottom: 20px;">True excellence is the intersection of Attitude, Skill, and Knowledge.</p>
+    <button class="cta-btn" onclick="toggleVault()"> COURSES <i class="fas fa-th-large"></i></button>
+</section>
+
+<div id="academyVault">
+    <span class="close-vault" onclick="toggleVault()">×</span>
+    <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 30px;"> COURSES </h2>
+
+    <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="courseSearch" class="search-input" placeholder="Search courses..." onkeyup="filterCourses()">
+        <div class="search-actions">
+            <span id="langToggle" class="lang-btn" onclick="toggleLang()">EN</span>
+            <i class="fas fa-times clear-btn" id="clearSearch" onclick="clearInput()"></i>
+            <i class="fas fa-microphone mic-icon" onclick="startVoiceSearch()"></i>
+        </div>
+    </div>
+
+    <div id="noResultMsg">
+        <i class="fas fa-user-tie" style="font-size: 2.5rem; color: var(--accent-blue); margin-bottom: 15px;"></i>
+        <h3>Looking for something specific?</h3>
+        <p style="color: #cbd5e1;">We may have a specialized program for you. Please contact our counselor at <strong>+91 96208 37458</strong> regarding your query.</p>
+        <button class="overlay-enquiry-btn" style="margin-top: 20px;" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+    </div>
+
+    <div class="container" id="courseContainer">
+        <div class="glass-card" data-tags="vocation trade hands-on skills">
+            <img src="SK.png" class="course-img">
+            <div class="card-static-info"><i class="fas fa-tools"></i><h3>1. Skill Development Program</h3></div>
+            <div class="card-overlay">
+                <h3>Skill Development Program</h3>
+                <p>A multi-skilling program where trainees learn additional skills along with core skills.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Skill Development', 'A multi-skilling program where trainees learn additional skills along with core skills.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="brain logic intelligence memory concentration">
+            <img src="IQ.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-brain"></i><h3>2. IQ Improvement Program</h3></div>
+            <div class="card-overlay">
+                <h3>IQ Improvement Program</h3>
+                <p>Brain sharpening and brainstorming sessions to improve Intelligence Quotient.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('IQ Improvement', 'Brain sharpening and brainstorming sessions to improve Intelligence Quotient.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="speak talk english kannada hindi communication grammar">
+            <img src="LLP.png" class="course-img">
+            <div class="card-static-info"><i class="fas fa-language"></i><h3>3. Languages Learning</h3></div>
+            <div class="card-overlay">
+                <h3>Languages Learning Program</h3>
+                <p>Master Kannada, English, and Hindi through stage-wise patterned learning.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Languages Learning', 'Master Kannada, English, and Hindi through stage-wise patterned learning.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="confidence grooming public speaking manners behavior">
+            <img src="PD.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-user-tie"></i><h3>4. Personality Development</h3></div>
+            <div class="card-overlay">
+                <h3>Personality Development</h3>
+                <p>Developing, enhancing, and changing one's personality over time.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Personality Development', 'Developing, enhancing, and changing one\'s personality over time.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="teaching coaching mentoring leader education">
+            <img src="TT.png" class="course-img">
+            <div class="card-static-info"><i class="fas fa-chalkboard-teacher"></i><h3>5. Train The Trainer Program</h3></div>
+            <div class="card-overlay">
+                <h3>Train The Trainer</h3>
+                <p>A certification program where the trainer learns essential teaching skills.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Train The Trainer', 'A certification program where the trainer learns essential teaching skills.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="coding python java programming web software technology">
+            <img src="EL.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-laptop-code"></i><h3>6. Computer Education</h3></div>
+            <div class="card-overlay">
+                <h3>Computer Education</h3>
+                <p>Computer Basics, Computer Programming Languages, Tally Prime, SAP, and Hardware & Networking.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Computer Education', 'Computer Basics, Programming, Tally Prime, SAP, Hardware.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="cars engine mechanic vehicle garage transport">
+            <img src="AM.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-car"></i><h3>7. Automobile Program</h3></div>
+            <div class="card-overlay">
+                <h3>Automobile Program</h3>
+                <p>Equipping individuals with knowledge for the automotive industry.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Automobile Program', 'Equipping individuals with knowledge for the automotive industry.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="social media ads seo website internet business">
+            <img src="DM.png" class="course-img">
+            <div class="card-static-info"><i class="fas fa-bullhorn"></i><h3>8. Digital Marketing Program</h3></div>
+            <div class="card-overlay">
+                <h3>Digital Marketing</h3>
+                <p>Effectively promote products online through various digital forums like SEO and SEM.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Digital Marketing', 'Effectively promote products online through various digital forums.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="math numbers kids children calculation speed">
+            <img src="ABA.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-calculator"></i><h3>9. Abacus Training Program</h3></div>
+            <div class="card-overlay">
+                <h3>Abacus Training</h3>
+                <p>Perform calculations and develop children's mental math skills.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Abacus Training', 'Perform calculations and develop children\'s mental math skills.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="math ancient shortcut arithmetic algebra speed">
+            <img src="VM.png" class="course-img">
+            <div class="card-static-info"><i class="fas fa-infinity"></i><h3>10. Vedic Mathematics</h3></div>
+            <div class="card-overlay">
+                <h3>Vedic Mathematics</h3>
+                <p>Simplified approach to solving complex problems in arithmetic and algebra.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Vedic Mathematics', 'Simplified approach to solving problems in arithmetic and algebra.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="employment placement career business startup">
+            <img src="https://images.unsplash.com/photo-1454165833767-027ffea9e77b?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-user-graduate"></i><h3>11. Job Oriented Course (JOC)</h3></div>
+            <div class="card-overlay">
+                <h3>Job Oriented Course</h3>
+                <p>Acquire skills to set up or start your own job works or services.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Job Oriented', 'Acquire skills to start your own job services.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="medical fitness wellness disease doctor safety">
+            <img src="https://images.unsplash.com/photo-1505751172107-597d5a4d4b9c?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-heartbeat"></i><h3>12. Health Awareness Program</h3></div>
+            <div class="card-overlay">
+                <h3>Health Awareness</h3>
+                <p>Educating about diseases and health hazards with prevention goals.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Health Awareness', 'Disease prevention and wellness education.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="money stocks investment finance profit market">
+            <img src="https://images.unsplash.com/photo-1611974714658-75d4f11a8117?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-chart-line"></i><h3>13. Trading Training</h3></div>
+            <div class="card-overlay">
+                <h3>Trading</h3>
+                <p>Skills necessary to trade financial instruments like stocks, bonds, and forex.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Trading Training', 'Master stocks, bonds, and financial markets.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="management hr team leader people social">
+            <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-comments"></i><h3>14. Soft Skill Development</h3></div>
+            <div class="card-overlay">
+                <h3>Soft Skill Development</h3>
+                <p>Includes Management Skills & Supervisory skills programs.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Soft Skills', 'Management and Supervisory skills programs.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="factory manufacturing machines engineering sqdch">
+            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-cogs"></i><h3>15. Tech Skill Development</h3></div>
+            <div class="card-overlay">
+                <h3>Technical Skill Development</h3>
+                <p>Activity-based program on SQDCH requirements of manufacturing.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Tech Skill', 'Manufacturing requirements and SQDCH operations.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="eyes taste smell touch feel reflex physical">
+            <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=500&q=80" class="course-img">
+            <div class="card-static-info"><i class="fas fa-eye"></i><h3>16. Sense Development Program</h3></div>
+            <div class="card-overlay">
+                <h3>Sense Development</h3>
+                <p>Recognize and react to physical abilities: see, hear, smell, taste, and feel.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('Sense Development', 'Recognize and react to physical sensory abilities.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+
+        <div class="glass-card" data-tags="internship practical field work experience apprentice">
+            <img src="OJT.jpg" class="course-img">
+            <div class="card-static-info"><i class="fas fa-briefcase"></i><h3>17. On Job Training</h3></div>
+            <div class="card-overlay">
+                <h3>On Job Training</h3>
+                <p>Learning practical skills directly in the workplace environment.</p>
+                <button class="compare-btn-mini" onclick="addToCompare('On Job Training', 'Learning practical skills directly in the workplace.')">Compare +</button>
+                <button class="overlay-enquiry-btn" onclick="toggleVault(); window.location.href='#contact'">Enquire Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="skills-flex">
+        <div class="skill-item"><i class="fas fa-server"></i><p>SAP</p></div>
+        <div class="skill-item"><i class="fas fa-image"></i><p>Photoshop</p></div>
+        <div class="skill-item"><i class="fas fa-chart-bar"></i><p>Power BI</p></div>
+        <div class="skill-item"><i class="fas fa-code"></i><p>C / C++</p></div>
+        <div class="skill-item"><i class="fab fa-java"></i><p>Java</p></div>
+        <div class="skill-item"><i class="fab fa-python"></i><p>Python</p></div>
+    </div>
+</div>
+
+<section class="contact-box" id="contact">
+    <div class="contact-grid">
+        <div class="contact-text">
+            <h2 style="font-size: 3rem; margin-bottom: 20px;">Join the <span style="color: var(--accent-blue);">Academy</span></h2>
+            <p style="color: #cbd5e1; margin-bottom: 40px; font-size: 1.1rem;">Ready to start? Fill out the form or reach us directly.</p>
+            <p><i class="fas fa-location-dot" style="color: var(--accent-blue); margin-right: 10px;"></i> <strong>Nelamangala Campus:</strong><br>Prakash Building, 2nd Floor, Nelamangala 562123</p><br>
+            <p><i class="fas fa-phone-volume" style="color: var(--accent-blue); margin-right: 10px;"></i> <strong>Direct Helpline:</strong><br>+91 96208 37458</p>
+        </div>
+
+        <div class="form-container">
+            <div class="success-overlay" id="successBox">
+                <i class="fas fa-check-circle" style="font-size: 4rem; color: #25d366; margin-bottom: 20px;"></i>
+                <h3>Application Received!</h3>
+                <p>Opening WhatsApp to connect with our counselor...</p>
+                <button class="cta-btn" onclick="resetForm()" style="margin-top: 30px; padding: 12px 30px;">Go Back</button>
+            </div>
+
+            <form class="inquiry-form" onsubmit="handleInquiry(event)">
+                <div class="input-group"><i class="fas fa-user"></i><input type="text" id="n" placeholder="Full Name" required></div>
+                <div class="input-group"><i class="fas fa-phone"></i><input type="tel" id="p" placeholder="Mobile Number" required></div>
+                <div class="input-group full-width">
+                    <i class="fas fa-graduation-cap"></i>
+                    <select id="c" required>
+                        <option value="" disabled selected>Select Your Course</option>
+                        <option>Computer Education (Coding/Tally/SAP)</option>
+                        <option>Skill Development Program</option>
+                        <option>IQ Improvement & Vedic Maths</option>
+                        <option>Language Learning (Kannada/English/Hindi)</option>
+                        <option>Digital Marketing Program</option>
+                        <option>Trading & Financial Markets</option>
+                        <option>Automobile Related Program</option>
+                        <option>Abacus Training</option>
+                        <option>Personality & Soft Skill Development</option>
+                        <option>Job Oriented Course (JOC)</option>
+                        <option>Tech Skill (Manufacturing)</option>
+                        <option>On Job Training</option>
+                    </select>
+                </div>
+                <div class="input-group full-width"><i class="fas fa-comment-dots"></i><input type="text" id="m" placeholder="Any Questions?"></div>
+                <button type="submit" class="cta-btn full-width">Send Inquiry <i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<footer style="text-align: center; padding: 40px; color: #475569; border-top: 1px solid var(--glass-border);">© 2021 SUYOGA Group of Institutions.</footer>
+
+<script>
+    /* --- MULTILINGUAL & FUZZY SEARCH LOGIC --- */
+    let langIndex = 0;
+    const langs = [
+        { code: 'en-US', label: 'EN', color: '#00d2ff', hint: 'Listening...' },
+        { code: 'kn-IN', label: 'KN', color: '#9d50bb', hint: 'ದಯವಿಟ್ಟು ಮಾತನಾಡಿ...' },
+        { code: 'hi-IN', label: 'HI', color: '#ffbd03', hint: 'बोलिए...' }
+    ];
+
+    function toggleLang() {
+        langIndex = (langIndex + 1) % langs.length;
+        const current = langs[langIndex];
+        const btn = document.getElementById('langToggle');
+        btn.innerText = current.label;
+        btn.style.color = current.color;
+        btn.style.borderColor = current.color;
+    }
+
+    function clearInput() {
+        const input = document.getElementById('courseSearch');
+        input.value = '';
+        filterCourses();
+        input.focus();
+    }
+
+    function startVoiceSearch() {
+        const searchInput = document.getElementById('courseSearch');
+        const micIcon = document.querySelector('.mic-icon');
+        const current = langs[langIndex];
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) { alert("Voice search is not supported by your browser. Please use Chrome."); return; }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = current.code;
+        
+        recognition.onstart = () => {
+            micIcon.classList.add('recording');
+            searchInput.placeholder = current.hint;
+        };
+
+        recognition.onresult = (e) => {
+            const transcript = e.results[0][0].transcript.replace(/\.$/g, '');
+            searchInput.value = transcript;
+            filterCourses(); // TRIGGER SEARCH AUTOMATICALLY
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+            micIcon.classList.remove('recording');
+            searchInput.placeholder = "Search courses...";
+        };
+
+        recognition.start();
+    }
+
+    function isFuzzyMatch(search, target) {
+        if (search.length < 3) return false;
+        return target.split(' ').some(word => word.startsWith(search));
+    }
+
+    function filterCourses() {
+        const input = document.getElementById('courseSearch');
+        const filter = input.value.toLowerCase().trim();
+        const clearBtn = document.getElementById('clearSearch');
+        const cards = document.getElementsByClassName('glass-card');
+        const msg = document.getElementById('noResultMsg');
+        
+        if (clearBtn) clearBtn.style.display = filter.length > 0 ? 'block' : 'none';
+        
+        let count = 0;
+        for (let i = 0; i < cards.length; i++) {
+            const titleElement = cards[i].querySelector('h3');
+            if (!titleElement) continue;
+            const title = titleElement.innerText.toLowerCase();
+            const tags = (cards[i].getAttribute('data-tags') || "").toLowerCase();
+            
+            if (title.includes(filter) || tags.includes(filter) || isFuzzyMatch(filter, title)) {
+                cards[i].style.display = "";
+                count++;
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
+        msg.style.display = (count === 0 && filter !== "") ? "block" : "none";
+    }
+
+    /* --- CORE UI FUNCTIONALITY --- */
+    function toggleVault() {
+        const v = document.getElementById('academyVault');
+        const isClosed = v.style.display === 'none' || v.style.display === '';
+        v.style.display = isClosed ? 'block' : 'none';
+        document.body.style.overflow = isClosed ? 'hidden' : 'auto';
+
+        if(isClosed) {
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => card.classList.add('show'), index * 60);
+            });
+        } else {
+            document.querySelectorAll('.glass-card').forEach(card => card.classList.remove('show'));
+        }
+    }
+
+    window.onscroll = function() {
+        const btn = document.getElementById("backToTop");
+        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+            btn.style.display = "flex";
+        } else {
+            btn.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    let comparison = [];
+    function addToCompare(title, desc) {
+        if (comparison.length < 2) {
+            comparison.push({title, desc});
+            updateCompareUI();
+        } else { alert("Limit: 2 courses."); }
+    }
+
+    function updateCompareUI() {
+        const tray = document.getElementById('compareTray');
+        const content = document.getElementById('compareContent');
+        tray.classList.add('active');
+        content.innerHTML = comparison.map(c => `<div class="compare-box"><strong>${c.title}</strong><br><small>${c.desc}</small></div>`).join('') + (comparison.length < 2 ? '<div class="compare-box">Select one more...</div>' : '');
+    }
+
+    function closeCompare() {
+        comparison = [];
+        document.getElementById('compareTray').classList.remove('active');
+    }
+
+    function handleInquiry(e) {
+        e.preventDefault();
+        const name = document.getElementById('n').value;
+        const phone = document.getElementById('p').value;
+        const course = document.getElementById('c').value;
+        const msg = document.getElementById('m').value || "Inquiry from website";
+        const text = `*New Inquiry - SUYOGA*%0A*Name:* ${name}%0A*Phone:* ${phone}%0A*Course:* ${course}%0A*Message:* ${msg}`;
+        window.open(`https://wa.me/919620837458?text=${text}`, '_blank');
+        document.getElementById('successBox').style.display = 'flex';
+    }
+
+    function resetForm() { document.getElementById('successBox').style.display = 'none'; }
+    function goToContact() { toggleVault(); window.location.href = '#contact'; }
+
+    const hrs = new Date().getHours();
+    if (hrs >= 22 || hrs < 5) document.getElementById('nightOwl').style.display = 'block';
+</script>
+
+</body>
+</html>
